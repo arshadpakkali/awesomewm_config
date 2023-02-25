@@ -16,7 +16,7 @@ local menubar = require("menubar")
 local hotkeys_popup = require("awful.hotkeys_popup")
 -- Enable hotkeys help widget for VIM and other apps
 -- when client with a matching name is opened:
-require("awful.hotkeys_popup.keys")
+-- require("awful.hotkeys_popup.keys")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -52,6 +52,14 @@ end
 -- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
 beautiful.init(gears.filesystem.get_themes_dir() .. "zenburn/theme.lua")
+beautiful.useless_gap = 2
+beautiful.gap_single_client = false
+beautiful.font = "CaskaydiaCove Nerd Font Mono 14"
+
+beautiful.notification_font = "CaskaydiaCove Nerd Font Mono 14"
+beautiful.notification_border_width = 2
+beautiful.notification_border_color = "#ffff00"
+beautiful.notification_opacity = 80
 
 -- This is used later as the default terminal and editor to run.
 local terminal = "kitty -1"
@@ -232,7 +240,6 @@ awful.screen.connect_for_each_screen(function(s)
 		layout = wibox.layout.align.horizontal,
 		{ -- Left widgets
 			layout = wibox.layout.fixed.horizontal,
-			mylauncher,
 			s.mytaglist,
 			s.mypromptbox,
 		},
@@ -290,7 +297,6 @@ local globalkeys = gears.table.join(
 		awful.screen.focus_relative(-1)
 	end, { description = "focus the previous screen", group = "screen" }),
 	awful.key({ modkey }, "u", awful.client.urgent.jumpto, { description = "jump to urgent client", group = "client" }),
-
 	awful.key({ modkey }, "Tab", function()
 		awful.client.focus.history.previous()
 		if client.focus then
@@ -362,7 +368,35 @@ local globalkeys = gears.table.join(
 
 	awful.key({ modkey }, "d", function()
 		awful.spawn("rofi -modi drun -show drun -theme ~/.config/rofi/gruvbox.rasi")
-	end, { description = "show rofi", group = "launcher" })
+	end, { description = "show rofi", group = "launcher" }),
+
+	awful.key({ modkey, "Control" }, "c", function()
+		awful.spawn("gnome-calculator")
+	end, { description = "Open Calculator", group = "Apps" }),
+	awful.key({ modkey, "Control" }, "b", function()
+		awful.spawn("blueman-manager")
+	end, { description = "Open Bluetooth", group = "Apps" }),
+	awful.key({ modkey, "Control" }, "m", function()
+		awful.spawn("pavucontrol")
+	end, { description = "Open pavucontrol", group = "Apps" }),
+
+	awful.key({ modkey, "Shift" }, "t", function()
+		--[[ local notif_icon = gears.surface.load_uncached(
+                       gears.filesystem.get_configuration_dir() .. "path/to/icon") ]]
+		naughty.notify({
+			-- screen = 1,
+			-- timeout = 0,-- in seconds
+			-- ignore_suspend = true,-- if true notif shows even if notifs are suspended via naughty.suspend
+			-- fg = "#ff0",
+			-- bg = "#ff0000",
+			title = "Test Title",
+			text = "Test Notification",
+			-- icon = gears.color.recolor_image(notif_icon, "#ff0"),
+			-- icon_size = 24,-- in px
+			border_color = "#ffff00",
+			border_width = 2,
+		})
+	end, { description = "send test notification", group = "awesome" })
 )
 
 local clientkeys = gears.table.join(
@@ -406,10 +440,11 @@ local clientkeys = gears.table.join(
 		c:raise()
 	end, { description = "(un)maximize", group = "client" }),
 
-	awful.key({ modkey, "Control" }, "m", function(c)
-		c.maximized_vertical = not c.maximized_vertical
-		c:raise()
-	end, { description = "(un)maximize vertically", group = "client" }),
+	-- awful.key({ modkey, "Control" }, "m", function(c)
+	-- 	c.maximized_vertical = not c.maximized_vertical
+	-- 	c:raise()
+	-- end, { description = "(un)maximize vertically", group = "client" }),
+
 	awful.key({ modkey, "Shift" }, "m", function(c)
 		c.maximized_horizontal = not c.maximized_horizontal
 		c:raise()
@@ -614,3 +649,7 @@ awful.spawn.with_shell(
 		-- list each of your autostart commands, followed by ; inside single quotes, followed by ..
 		.. "dex --environment Awesome --autostart"
 )
+
+-- Autostart
+awful.spawn("lxpolkit")
+awful.spawn("picom --experimental-backends -b")
