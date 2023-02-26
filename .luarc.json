@@ -1,0 +1,11 @@
+{
+  "$schema": "/home/arshad/Documents/Code/personal/vscode-lua/setting/schema.json",
+  "workspace": {
+    "library": ["/usr/share/awesome/lib"]
+  },
+  "diagnostics": {
+    "enable": true,
+    "globals": ["awesome", "client",
+            "screen"]
+  }
+}

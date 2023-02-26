@@ -3,7 +3,7 @@
 --    By Adrian C. (anrxc)   --
 -------------------------------
 
-local themes_path = require("gears.filesystem").get_themes_dir()
+local themes_path = require("gears.filesystem").get_configuration_dir() .. "/themes/"
 local dpi = require("beautiful.xresources").apply_dpi
 
 -- {{{ Main
@@ -12,7 +12,11 @@ theme.wallpaper = themes_path .. "zenburn/zenburn-background.png"
 -- }}}
 
 -- {{{ Styles
-theme.font      = "sans 8"
+theme.font      = "CaskaydiaCove Nerd Font Mono 14"
+
+theme.notification_font = "CaskaydiaCove Nerd Font Mono 14"
+theme.notification_border_width = 2
+theme.notification_border_color = "#ffff00"
 
 -- {{{ Colors
 theme.fg_normal  = "#DCDCCC"
@@ -25,10 +29,10 @@ theme.bg_systray = theme.bg_normal
 -- }}}
 
 -- {{{ Borders
-theme.useless_gap   = dpi(0)
+theme.useless_gap   = dpi(3)
 theme.border_width  = dpi(2)
 theme.border_normal = "#3F3F3F"
-theme.border_focus  = "#6F6F6F"
+theme.border_focus  = "#8ec07c"
 theme.border_marked = "#CC9393"
 -- }}}
 
