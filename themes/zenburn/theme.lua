@@ -47,6 +47,12 @@ theme.tasklist_shape_border_color_focus = "#8ec07c"
 theme.taglist_shape_border_width_focus = 1
 theme.taglist_shape_border_color_focus = "#8ec07c"
 
+
+-- hotkeys
+theme.hotkeys_font = "CaskaydiaCove Nerd Font Mono 14"
+theme.hotkeys_description_font = "CaskaydiaCove Nerd Font Mono 12"
+theme.hotkeys_border_color = "#8ec07c"
+
 -- {{{ Colors
 theme.fg_normal = "#a89984"
 theme.fg_focus = "#ebdbb2"
@@ -58,7 +64,7 @@ theme.bg_urgent = "#fb4934"
 -- }}}
 
 -- {{{ Borders
-theme.useless_gap = dpi(3)
+theme.useless_gap = dpi(0)
 theme.border_width = dpi(2)
 theme.border_normal = "#3F3F3F"
 theme.border_focus = "#8ec07c"

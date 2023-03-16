@@ -1,12 +1,15 @@
 pcall(require, "luarocks.loader")
 
 local gears = require("gears")
-local awful = require("awful")
+awful = require("awful")
 require("awful.autofocus")
 local wibox = require("wibox")
 local beautiful = require("beautiful")
 local naughty = require("naughty")
 local hotkeys_popup = require("awful.hotkeys_popup")
+
+local bling = require("bling")
+local lain = require("lain")
 
 if awesome.startup_errors then
 	naughty.notify({
@@ -44,12 +47,12 @@ local modkey = "Mod4"
 awful.layout.layouts = {
 	awful.layout.suit.tile,
 	awful.layout.suit.spiral,
-	awful.layout.suit.tile.bottom,
-	awful.layout.suit.fair,
 	awful.layout.suit.max,
 }
 
 local mytextclock = wibox.widget.textclock("%a %b %d, %I:%M %p")
+
+local myhotkeyPopup = hotkeys_popup.widget.new({ height = 1300, width = 1400 })
 
 local taglist_buttons = gears.table.join(
 	awful.button({}, 1, function(t)
@@ -171,36 +174,54 @@ awful.screen.connect_for_each_screen(function(s)
 	s.mywibox = awful.wibar({ position = "bottom", screen = s, height = 25 })
 
 	local mysystemtray = wibox.widget.systray()
-
 	-- Add widgets to the wibox
+	local ram = lain.widget.mem({
+		settings = function()
+			widget:set_markup("󰍛 " .. math.floor(mem_now.used / 1024 * 10) / 10 .. "G")
+		end,
+	})
+	local cpu = lain.widget.cpu({
+		settings = function()
+			widget:set_markup("CPU " .. cpu_now.usage .. "%")
+		end,
+	})
+
+	local mynetdown = wibox.widget.textbox()
+	local mynetup = lain.widget.net({
+		units = 1024 ^ 2,
+		settings = function()
+			widget:set_markup(net_now.sent)
+			mynetdown:set_markup(net_now.received)
+		end,
+	})
+
 	s.mywibox:setup({
-		layout = wibox.layout.stack,
+		layout = wibox.layout.align.horizontal,
+		expand = "none",
 		{
-			layout = wibox.layout.align.horizontal,
-			{ -- Left widgets
-				layout = wibox.layout.fixed.horizontal,
-				s.mytaglist,
-				s.mypromptbox,
-				s.mytasklist,
-			},
-			nil,
-			{ -- Right widgets
-				layout = wibox.layout.fixed.horizontal,
-				mysystemtray,
-				s.mylayoutbox,
-			},
+			layout = wibox.layout.fixed.horizontal,
+			s.mytaglist,
+			s.mypromptbox,
+			s.mytasklist,
 		},
+		{ layout = wibox.layout.fixed.horizontal, mytextclock },
 		{
-			mytextclock,
-			halign = "center",
-			valign = "center",
-			layout = wibox.container.place,
+			layout = wibox.layout.fixed.horizontal,
+			spacing = 10,
+			mynetup,
+			mynetdown,
+			cpu,
+			ram,
+			mysystemtray,
+			s.mylayoutbox,
 		},
 	})
 end)
 
 local globalkeys = gears.table.join(
-	awful.key({ modkey }, "s", hotkeys_popup.show_help, { description = "show help", group = "awesome" }),
+	awful.key({ modkey }, "s", function()
+		myhotkeyPopup:show_help()
+	end, { description = "show help", group = "awesome" }),
 	awful.key({ modkey }, "Left", awful.tag.viewprev, { description = "view previous", group = "tag" }),
 	awful.key({ modkey }, "Right", awful.tag.viewnext, { description = "view next", group = "tag" }),
 	awful.key({ modkey }, "Escape", awful.tag.history.restore, { description = "go back", group = "tag" }),
@@ -238,9 +259,7 @@ local globalkeys = gears.table.join(
 		awful.spawn(terminal)
 	end, { description = "open a terminal", group = "launcher" }),
 	awful.key({ modkey, "Shift" }, "r", awesome.restart, { description = "reload awesome", group = "awesome" }),
-
-	-- awful.key({ modkey, "Shift" }, "q", awesome.quit, { description = "quit awesome", group = "awesome" }),
-
+	awful.key({ modkey, "Control" }, "e", awesome.quit, { description = "Exit awesome", group = "awesome" }),
 	awful.key({ modkey }, "l", function()
 		awful.client.focus.bydirection("right")
 	end, { description = "go to left client", group = "layout" }),
@@ -256,18 +275,27 @@ local globalkeys = gears.table.join(
 		awful.tag.incnmaster(-1, nil, true)
 	end, { description = "decrease the number of master clients", group = "layout" }),
 	awful.key({ modkey, "Control" }, "h", function()
-		awful.tag.incncol(1, nil, true)
+		awful.tag.incmwfact(-0.05)
 	end, { description = "increase the number of columns", group = "layout" }),
 	awful.key({ modkey, "Control" }, "l", function()
-		awful.tag.incncol(-1, nil, true)
+		awful.tag.incmwfact(0.05)
 	end, { description = "decrease the number of columns", group = "layout" }),
 	awful.key({ modkey }, "space", function()
 		awful.layout.inc(1)
 	end, { description = "select next", group = "layout" }),
 
-	-- awful.key({ modkey, "Shift" }, "space", function()
-	-- 	awful.layout.inc(-1)
-	-- end, { description = "select previous", group = "layout" }),
+	awful.key({ modkey }, "w", function()
+		local curr_screen = awful.screen.focused()
+		if awful.layout.get(curr_screen) == awful.layout.suit.max then
+			awful.layout.set(awful.layout.suit.tile)
+			return
+		end
+		awful.layout.set(awful.layout.suit.max)
+	end, { description = "Toggle Max Layout", group = "layout" }),
+
+	awful.key({ modkey, "Control" }, "space", function()
+		awful.layout.inc(-1)
+	end, { description = "select previous", group = "layout" }),
 
 	awful.key({ modkey, "Control" }, "n", function()
 		local c = awful.client.restore()
@@ -288,28 +316,67 @@ local globalkeys = gears.table.join(
 
 	awful.key({ modkey }, "d", function()
 		awful.spawn("rofi -modi drun -show drun -theme ~/.config/rofi/gruvbox.rasi")
-	end, { description = "show rofi", group = "launcher" }),
+	end, { description = "show rofi", group = "Launcher" }),
+
+	awful.key({ modkey }, "Print", function()
+		awful.spawn("flameshot gui")
+	end, { description = "send test notification", group = "awesome" }),
+
+	awful.key({ modkey }, "o", function()
+		awful.spawn.with_shell("/home/arshad/.local/bin/calc")
+	end, { description = "send test notification", group = "awesome" }),
+
+	awful.key({ modkey, "Shift" }, "o", function()
+		awful.spawn("killall calc")
+	end, { description = "send test notification", group = "awesome" }),
 
 	awful.key({ modkey, "Control" }, "c", function()
 		awful.spawn("gnome-calculator")
 	end, { description = "Open Calculator", group = "Apps" }),
 	awful.key({ modkey, "Control" }, "b", function()
 		awful.spawn("blueman-manager")
-	end, { description = "Open Bluetooth", group = "Apps" }),
+	end, { description = "Open Bluetooth Settings", group = "Apps" }),
 	awful.key({ modkey, "Control" }, "m", function()
 		awful.spawn("pavucontrol")
 	end, { description = "Open pavucontrol", group = "Apps" }),
 
-	awful.key({ modkey, "Shift" }, "t", function()
-		naughty.notify({
-			title = "Test Title",
-			text = "Test Notification",
-			actions = {
-				"Test Action 1",
-				"Test Action 2",
+	awful.key({ modkey }, "F2", function()
+		awful.spawn("firefox-developer-edition")
+	end, { description = "Open Firefox", group = "Apps" }),
+
+	awful.key({ modkey }, "F3", function()
+		awful.spawn("pcmanfm")
+	end, { description = "Open File Manager", group = "Apps" }),
+
+	awful.key({ modkey }, "0", function()
+		awful.prompt.run({
+			prompt = "PRESS: Shutdown(Shift+s)| suspend(s) | Reboot (r) ",
+			hooks = {
+				{
+					{},
+					"s",
+					function()
+						awful.spawn("systemctl suspend")
+					end,
+				},
+				{
+					{ "Shift" },
+					"S",
+					function()
+						awful.spawn("systemctl poweroff")
+					end,
+				},
+				{
+					{},
+					"r",
+					function()
+						awful.spawn("systemctl reboot")
+					end,
+				},
 			},
+			textbox = awful.screen.focused().mypromptbox.widget,
 		})
-	end, { description = "send test notification", group = "awesome" })
+	end, { description = "Power Menu", group = "Launcher" })
 )
 
 local clientkeys = gears.table.join(
@@ -389,6 +456,7 @@ for i = 1, 9 do
 				local tag = client.focus.screen.tags[i]
 				if tag then
 					client.focus:move_to_tag(tag)
+					tag:view_only()
 				end
 			end
 		end, { description = "move focused client to tag #" .. i, group = "tag" }),
@@ -456,7 +524,6 @@ awful.rules.rules = {
 				"veromix",
 				"xtightvncviewer",
 			},
-
 			-- Note that the name property shown in xprop might be set slightly after creation of the client
 			-- and the name shown there might not match defined rules here.
 			name = {
@@ -476,7 +543,8 @@ awful.rules.rules = {
 	{ rule_any = { type = { "dialog" } }, properties = { titlebars_enabled = true } },
 
 	-- Set Firefox to always map on the tag named "2" on screen 1.
-	{ rule = { class = "firefox" }, properties = { screen = 1, tag = "2", border_width = false } },
+	{ rule = { class = "firefox" }, properties = { screen = 1, tag = "2", border_width = 0 } },
+	{ rule = { class = "Brave-browser" }, properties = { screen = 1, tag = "2", border_width = 0 } },
 }
 
 client.connect_signal("manage", function(c)
@@ -504,20 +572,24 @@ client.connect_signal("request::titlebars", function(c)
 	)
 
 	awful.titlebar(c):setup({
-		{ -- Left
+		{
+			-- Left
 			awful.titlebar.widget.iconwidget(c),
 			buttons = buttons,
 			layout = wibox.layout.fixed.horizontal,
 		},
-		{ -- Middle
-			{ -- Title
+		{
+			-- Middle
+			{
+				-- Title
 				align = "center",
 				widget = awful.titlebar.widget.titlewidget(c),
 			},
 			buttons = buttons,
 			layout = wibox.layout.flex.horizontal,
 		},
-		{ -- Right
+		{
+			-- Right
 			awful.titlebar.widget.floatingbutton(c),
 			awful.titlebar.widget.maximizedbutton(c),
 			awful.titlebar.widget.stickybutton(c),
@@ -547,5 +619,6 @@ awful.spawn.with_shell(
 		.. "dex --environment Awesome --autostart"
 )
 
-awful.spawn("lxpolkit")
-awful.spawn("picom --experimental-backends -b")
+awful.spawn.once("lxpolkit")
+awful.spawn.once("picom --experimental-backends -b")
+awful.spawn.once("kdeconnect-indicator")
