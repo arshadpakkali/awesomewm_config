@@ -10,7 +10,7 @@ local dpi = require("beautiful.xresources").apply_dpi
 
 -- {{{ Main
 local theme = {}
-theme.wallpaper = themes_path .. "zenburn/zenburn-background.png"
+theme.wallpaper = "/home/arshad/Pictures/gruvbox_simple.jpg"
 -- }}}
 
 -- {{{ Styles
@@ -46,7 +46,6 @@ theme.tasklist_shape_border_color_focus = "#8ec07c"
 -- Taglist
 theme.taglist_shape_border_width_focus = 1
 theme.taglist_shape_border_color_focus = "#8ec07c"
-
 
 -- hotkeys
 theme.hotkeys_font = "CaskaydiaCove Nerd Font Mono 14"

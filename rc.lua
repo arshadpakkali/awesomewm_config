@@ -177,21 +177,29 @@ awful.screen.connect_for_each_screen(function(s)
 	-- Add widgets to the wibox
 	local ram = lain.widget.mem({
 		settings = function()
-			widget:set_markup("󰍛 " .. math.floor(mem_now.used / 1024 * 10) / 10 .. "G")
+			widget:set_markup(
+				lain.util.markup.fontfg(
+					beautiful.font,
+					"#b8bb26",
+					"󰍛 " .. math.floor(mem_now.used / 1024 * 10) / 10 .. "G"
+				)
+			)
 		end,
 	})
 	local cpu = lain.widget.cpu({
 		settings = function()
-			widget:set_markup("CPU " .. cpu_now.usage .. "%")
+			widget:set_markup(lain.util.markup.fontfg(beautiful.font, "#83a598", "󰻠 " .. cpu_now.usage .. "%"))
 		end,
 	})
-
-	local mynetdown = wibox.widget.textbox()
-	local mynetup = lain.widget.net({
-		units = 1024 ^ 2,
+	-- Net
+	local netdowninfo = wibox.widget.textbox()
+	local netupinfo = lain.widget.net({
+		units = 1024 * 1024,
 		settings = function()
-			widget:set_markup(net_now.sent)
-			mynetdown:set_markup(net_now.received)
+			widget:set_markup(lain.util.markup.fontfg(beautiful.font, "#d3869b", " " .. net_now.sent .. "Mb"))
+			netdowninfo:set_markup(
+				lain.util.markup.fontfg(beautiful.font, "#8ec07c", " " .. net_now.received .. "Mb")
+			)
 		end,
 	})
 
@@ -208,8 +216,8 @@ awful.screen.connect_for_each_screen(function(s)
 		{
 			layout = wibox.layout.fixed.horizontal,
 			spacing = 10,
-			mynetup,
-			mynetdown,
+			netupinfo.widget,
+			netdowninfo,
 			cpu,
 			ram,
 			mysystemtray,
@@ -346,6 +354,10 @@ local globalkeys = gears.table.join(
 
 	awful.key({ modkey }, "F3", function()
 		awful.spawn("pcmanfm")
+	end, { description = "Open File Manager", group = "Apps" }),
+
+	awful.key({ modkey }, "F4", function()
+		awful.spawn("kitty -1 -e ranger")
 	end, { description = "Open File Manager", group = "Apps" }),
 
 	awful.key({ modkey }, "0", function()
