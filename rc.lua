@@ -38,7 +38,7 @@ end
 
 beautiful.init(gears.filesystem.get_configuration_dir() .. "themes/zenburn/theme.lua")
 
-local terminal = "kitty -1"
+local terminal = "wezterm"
 local editor = os.getenv("EDITOR") or "nvim"
 local editor_cmd = terminal .. " -e " .. editor
 
