@@ -51,6 +51,8 @@ awful.layout.layouts = {
 }
 
 local mytextclock = wibox.widget.textclock("%a %b %d, %I:%M %p")
+local month_calendar = awful.widget.calendar_popup.month()
+month_calendar:attach(mytextclock, "tr")
 
 local myhotkeyPopup = hotkeys_popup.widget.new({ height = 1300, width = 1400 })
 
@@ -202,6 +204,19 @@ awful.screen.connect_for_each_screen(function(s)
 			)
 		end,
 	})
+	local fsroothome = lain.widget.fs({
+		settings = function()
+			widget:set_text(
+				"/ - "
+					.. string.format("%.1f", fs_now["/"].used)
+					.. "/"
+					.. string.format("%.1f", fs_now["/"].size)
+					.. " "
+					.. fs_now["/"].units
+			)
+		end,
+	})
+	local mytemp = lain.widget.temp({ format = "cpu %.1f" })
 
 	s.mywibox:setup({
 		layout = wibox.layout.align.horizontal,
@@ -216,6 +231,8 @@ awful.screen.connect_for_each_screen(function(s)
 		{
 			layout = wibox.layout.fixed.horizontal,
 			spacing = 10,
+			mytemp.widget,
+			fsroothome.widget,
 			netupinfo.widget,
 			netdowninfo,
 			cpu,
@@ -339,13 +356,15 @@ local globalkeys = gears.table.join(
 	end, { description = "send test notification", group = "awesome" }),
 
 	awful.key({ modkey, "Control" }, "c", function()
-		awful.spawn("gnome-calculator")
+		awful.spawn("gnome-calculator", { floating = true })
 	end, { description = "Open Calculator", group = "Apps" }),
+
 	awful.key({ modkey, "Control" }, "b", function()
-		awful.spawn("blueman-manager")
+		awful.spawn("blueman-manager", { floating = true })
 	end, { description = "Open Bluetooth Settings", group = "Apps" }),
+
 	awful.key({ modkey, "Control" }, "m", function()
-		awful.spawn("pavucontrol")
+		awful.spawn("pavucontrol", { floating = true })
 	end, { description = "Open pavucontrol", group = "Apps" }),
 
 	awful.key({ modkey }, "F2", function()
@@ -357,8 +376,46 @@ local globalkeys = gears.table.join(
 	end, { description = "Open File Manager", group = "Apps" }),
 
 	awful.key({ modkey }, "F4", function()
-		awful.spawn("kitty -1 -e ranger")
+		awful.spawn.with_shell("EDITOR=nvim wezterm start ranger")
 	end, { description = "Open File Manager", group = "Apps" }),
+
+	awful.key({}, "XF86AudioLowerVolume", function()
+		awful.spawn("pamixer -d 5")
+		local handle = io.popen("pamixer --get-volume-human")
+		local vol = handle:read("*a")
+		handle:close()
+		naughty.notify({
+			text = vol,
+			timeout = 1,
+		})
+	end, { description = "Decrease Volume", group = "Sound" }),
+
+	awful.key({}, "XF86AudioRaiseVolume", function()
+		awful.spawn("pamixer -i 5")
+		local handle = io.popen("pamixer --get-volume-human")
+		local vol = handle:read("*a")
+		handle:close()
+		naughty.notify({
+			text = vol,
+			timeout = 1,
+		})
+	end, { description = "Increase Volume", group = "Sound" }),
+
+	awful.key({}, "XF86AudioPlay", function()
+		awful.spawn("playerctl play-pause")
+	end, { description = "play/pause", group = "Media" }),
+
+	awful.key({}, "XF86AudioNext", function()
+		awful.spawn("playerctl next")
+	end, { description = "next", group = "Media" }),
+
+	awful.key({}, "XF86AudioPrev", function()
+		awful.spawn("playerctl previous")
+	end, { description = "previous", group = "Media" }),
+
+	awful.key({ modkey }, "b", function()
+		awful.spawn.with_shell("~/.local/bin/cycle_sinks.sh")
+	end, { description = "Change default Audio Output", group = "Sound" }),
 
 	awful.key({ modkey }, "0", function()
 		awful.prompt.run({
@@ -413,9 +470,9 @@ local clientkeys = gears.table.join(
 		c:swap(awful.client.getmaster())
 	end, { description = "move to master", group = "client" }),
 
-	awful.key({ modkey }, "o", function(c)
-		c:move_to_screen()
-	end, { description = "move to screen", group = "client" }),
+	-- awful.key({ modkey }, "o", function(c)
+	-- 	c:move_to_screen()
+	-- end, { description = "move to screen", group = "client" }),
 
 	awful.key({ modkey }, "t", function(c)
 		c.ontop = not c.ontop
@@ -554,9 +611,23 @@ awful.rules.rules = {
 	{ rule_any = { type = { "normal" } }, properties = { titlebars_enabled = false } },
 	{ rule_any = { type = { "dialog" } }, properties = { titlebars_enabled = true } },
 
-	-- Set Firefox to always map on the tag named "2" on screen 1.
-	{ rule = { class = "firefox" }, properties = { screen = 1, tag = "2", border_width = 0 } },
-	{ rule = { class = "Brave-browser" }, properties = { screen = 1, tag = "2", border_width = 0 } },
+	{
+		rule = { class = "DBeaver" },
+		properties = { screen = 1, tag = "4" },
+	},
+	{
+		rule = { class = "Postman" },
+		properties = { screen = 1, tag = "3" },
+	},
+	{
+		rule = { class = "firefox" },
+		properties = { screen = 1, tag = "2", border_width = 0 },
+	},
+	{
+		rule = { class = "zoom" },
+		properties = { screen = 1, tag = "9" },
+	},
+	{ rule = { class = "Brave-browser" }, properties = { screen = 1, tag = "2", border_width = 0, floating = true } },
 }
 
 client.connect_signal("manage", function(c)
@@ -632,5 +703,4 @@ awful.spawn.with_shell(
 )
 
 awful.spawn.once("lxpolkit")
-awful.spawn.once("picom --experimental-backends -b")
 awful.spawn.once("kdeconnect-indicator")
